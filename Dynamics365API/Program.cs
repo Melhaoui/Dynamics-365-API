@@ -14,13 +14,22 @@ var builder = WebApplication.CreateBuilder(args);
 //JWT
 builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWT"));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+//auth and authorization
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    //Confirmed Email
+    options.SignIn.RequireConfirmedEmail = true;
+}).AddEntityFrameworkStores<ApplicationDbContext>();
+
 
 //Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICrmService, CrmService>();
 builder.Services.AddScoped<CRM, CRM>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
+//Services SMTP Email
+builder.Services.Configure<SMTP>(builder.Configuration.GetSection("SMTP"));
 
 //Connect DB
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -49,6 +58,9 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+//Enable CORS 
+builder.Services.AddCors();
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -71,5 +83,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+//Enable CORS 
+app.UseCors(c => c.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
 app.Run();
