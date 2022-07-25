@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -11,18 +10,23 @@ using System.Threading.Tasks;
 using Dynamics365API.Helpers;
 using Dynamics365API.Models;
 using Dynamics365API.Dtos;
+using Microsoft.AspNetCore.Identity;
 
 namespace Dynamics365API.Services
 {
     public class AuthService : IAuthService
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
         private readonly JWT _jwt;
 
-        public AuthService(UserManager<ApplicationUser> userManager, IOptions<JWT> jwt)
+        public AuthService(UserManager<ApplicationUser> userManager, IOptions<JWT> jwt, IConfiguration configuration, IEmailService emailService)
         {
             _userManager = userManager;
             _jwt = jwt.Value;
+            _configuration = configuration;
+            _emailService = emailService;
         }
 
         public async Task<AuthDto> RegisterAsync(RegisterDto model)
@@ -50,6 +54,10 @@ namespace Dynamics365API.Services
                 return new AuthDto { Message = errors };
             }
 
+            //Confirmed Email
+            //await GenerateEmailConfirmationTokenAsync(user);
+
+
             var jwtSecurityToken = await CreateJwtToken(user);
 
             return new AuthDto
@@ -72,6 +80,11 @@ namespace Dynamics365API.Services
                 authModel.Message = "Email or Password is incorrect!";
                 return authModel;
             }
+            if (!user.EmailConfirmed)
+            {
+                authModel.Message = "Validate Email!";
+                return authModel;
+            }
 
             var jwtSecurityToken = await CreateJwtToken(user);
 
@@ -83,6 +96,76 @@ namespace Dynamics365API.Services
             return authModel;
         }
 
+        public async Task<ApplicationUser> GetUserByEmailAsync(string email)
+        {
+            return await _userManager.FindByEmailAsync(email);
+        }
+
+        public async Task<IdentityResult> ConfirmEmailAsync(string uid, string token)
+        {
+            return await _userManager.ConfirmEmailAsync(await _userManager.FindByIdAsync(uid), token);
+        }
+
+        public async Task GenerateEmailConfirmationTokenAsync(ApplicationUser user)
+        {
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            if (!string.IsNullOrEmpty(token))
+            {
+                await SendEmailConfirmationEmail(user, token);
+            }
+        }
+
+        public async Task GenerateForgotPasswordTokenAsync(ApplicationUser user)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            if (!string.IsNullOrEmpty(token))
+            {
+                await SendForgotPasswordEmail(user, token);
+            }
+        }
+
+        public async Task<IdentityResult> ResetPasswordAsync(ResetPasswordDto model)
+        {
+            return await _userManager.ResetPasswordAsync(await _userManager.FindByIdAsync(model.UserId), model.Token, model.NewPassword);
+        }
+
+        private async Task SendEmailConfirmationEmail(ApplicationUser user, string token)
+        {
+            string appDomain = _configuration.GetSection("Application:AppDomain").Value;
+            string confirmationLink = _configuration.GetSection("Application:EmailConfirmation").Value;
+
+            UserEmailOptionsDto options = new UserEmailOptionsDto
+            {
+                ToEmails = new List<string>() { user.Email },
+                PlaceHolders = new List<KeyValuePair<string, string>>()
+                {
+                    new KeyValuePair<string, string>("{{UserName}}", user.FirstName),
+                    new KeyValuePair<string, string>("{{Link}}",
+                        string.Format(appDomain + confirmationLink, user.Id, token))
+                }
+            };
+
+            await _emailService.SendEmailForEmailConfirmation(options);
+        }
+
+        private async Task SendForgotPasswordEmail(ApplicationUser user, string token)
+        {
+            string appDomain = _configuration.GetSection("Application:AppDomain").Value;
+            string confirmationLink = _configuration.GetSection("Application:ForgotPassword").Value;
+
+            UserEmailOptionsDto options = new UserEmailOptionsDto
+            {
+                ToEmails = new List<string>() { user.Email },
+                PlaceHolders = new List<KeyValuePair<string, string>>()
+                {
+                    new KeyValuePair<string, string>("{{UserName}}", user.FirstName),
+                    new KeyValuePair<string, string>("{{Link}}",
+                        string.Format(appDomain + confirmationLink, user.Id, token))
+                }
+            };
+
+            await _emailService.SendEmailForForgotPassword(options);
+        }
         private async Task<JwtSecurityToken> CreateJwtToken(ApplicationUser user)
         {
             var userClaims = await _userManager.GetClaimsAsync(user);
