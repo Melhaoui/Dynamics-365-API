@@ -52,9 +52,9 @@ namespace Dynamics365API.Controllers
         }
 
         [HttpPost("checkEmail")]
-        public async Task<IActionResult> CheckEmailAsync([FromBody] string email)
+        public async Task<IActionResult> CheckEmailAsync([FromBody] EmailForRegistration emailDto)
         {
-            var result = await _crmService.CheckEmailAsync(email);
+            var result = await _crmService.CheckEmailAsync(emailDto.Email);
 
             return Ok(result);
         }

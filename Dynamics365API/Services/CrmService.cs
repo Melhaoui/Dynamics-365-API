@@ -23,6 +23,12 @@ namespace Dynamics365API.Services
             {
                 crmCheckEmail.Message = "This email address is already exist.";
                 crmCheckEmail.IsExisted = true;
+                crmCheckEmail.Email = email;
+                string fullname= result.value.Select(r => r.fullname).FirstOrDefault().ToString();
+                crmCheckEmail.firstname = fullname.Split()[0];
+                crmCheckEmail.lastname = fullname.Split()[1];
+                //Console.WriteLine("result :" + result.value.Select(r => r.fullname).ToString());
+
             }
             return crmCheckEmail;
         }
