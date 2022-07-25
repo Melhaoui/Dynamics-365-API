@@ -1,4 +1,5 @@
 ﻿using Dynamics365API.Dtos;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Dynamics365API.Services
 {
@@ -6,6 +7,8 @@ namespace Dynamics365API.Services
     {
         Task<CrmCheckEmailDto> CheckEmailAsync(string email);
 
-        Task<string> GetEntity(string entityQuery);
+        Task<object> GetEntity(string entityQuery);
+
+        Task<string> AddEntity(string entityQuery, object jsonObject);
     }
 }

@@ -1,5 +1,10 @@
 ﻿using Dynamics365API.Dtos;
 using Dynamics365API.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Identity;
 
 namespace Dynamics365API.Services
 {
@@ -33,22 +38,29 @@ namespace Dynamics365API.Services
             return crmCheckEmail;
         }
 
-        public async Task<string> GetEntity(string entityQuery)
+        public async Task<object> GetEntity(string entityQuery)
         {
-            string resultJson = null;
             var httpClient = await _crm.GetD365ClientAsync();
             string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
+            
+            var result = await httpClient.GetFromJsonAsync<object>(organizationAPIUrl + entityQuery);
+           
+            return  result ;
+        }
+        //------------------------------AddEntity Not working------------------------------------------------------------------
+        public async Task<string> AddEntity(string entityQuery,object jsonObject)
+        {
+      
+            var httpClient = await _crm.GetD365ClientAsync();
+            string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
+           
+            var content = new StringContent(
+                 JsonConvert.SerializeObject(jsonObject).ToString(), Encoding.UTF8, "application/json");
+            var httpResponse =  await httpClient.PostAsync(organizationAPIUrl + entityQuery, content);
 
-            var httpResponse = await httpClient.GetAsync(organizationAPIUrl + entityQuery);
+            var result = await httpResponse.Content.ReadAsStringAsync();
 
-            if (httpResponse.IsSuccessStatusCode)
-            {
-                if (httpResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    resultJson = httpResponse.Content.ReadAsStringAsync().Result;
-                }
-            }
-            return resultJson;
+            return result;
         }
 
     }
