@@ -17,7 +17,7 @@ namespace Dynamics365API.Dtos
         [Compare("NewPassword")]
         public string ConfirmNewPassword { get; set; }
 
-        public string? Message { get; set; }
+        //public string? Message { get; set; }
 
         public bool IsSuccess { get; set; }
     }

@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 using Dynamics365API.Services;
 using Dynamics365API.Dtos;
 using Microsoft.AspNetCore.Authorization;
+using Dynamics365API.Models;
 
 namespace Dynamics365API.Controllers
 {
@@ -60,12 +60,18 @@ namespace Dynamics365API.Controllers
             return Ok(result);
         }
 
-        [HttpGet("confirm-email")]
-        public async Task<IActionResult> ConfirmEmailAsync(string uid, string token, string email)
+        [AllowAnonymous, HttpGet("confirm-email")]
+        public async Task<IActionResult> ConfirmEmailAsync(string uid, string token)
         {
+            ApplicationUser user = new ApplicationUser() { };
+            if (!string.IsNullOrEmpty(uid)) 
+            {
+                user = await _authService.GetUserByIdAsync(uid);
+
+            }
             EmailConfirmDto model = new EmailConfirmDto
             {
-                Email = email
+                Email = user?.Email
             };
 
             if (!string.IsNullOrEmpty(uid) && !string.IsNullOrEmpty(token))
@@ -103,7 +109,7 @@ namespace Dynamics365API.Controllers
             return Ok(model);
         }
 
-        [AllowAnonymous, HttpPost("fotgot-password")]
+        [AllowAnonymous, HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPasswordAsync(ForgotPasswordDto model)
         {
             if (ModelState.IsValid)

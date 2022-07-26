@@ -11,7 +11,10 @@ namespace Dynamics365API.Services
 
         Task<AuthDto> GetTokenAsync(TokenRequestDto model);
 
+        Task<ApplicationUser> GetUserByIdAsync(string id);
+
         Task<ApplicationUser> GetUserByEmailAsync(string email);
+        
 
         Task<IdentityResult> ConfirmEmailAsync(string uid, string token);
 
