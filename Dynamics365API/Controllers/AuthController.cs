@@ -116,10 +116,12 @@ namespace Dynamics365API.Controllers
             {
                 var user = await _authService.GetUserByEmailAsync(model.Email);
                 if (user != null)
+                {
                     await _authService.GenerateForgotPasswordTokenAsync(user);
-
-                ModelState.Clear();
-                model.EmailSent = true;
+                    ModelState.Clear();
+                    model.EmailSent = true;
+                }
+                
             }
             return Ok(model);
         }
