@@ -9,6 +9,5 @@ namespace Dynamics365API.Services
         Task SendEmailForEmailConfirmation(UserEmailOptionsDto userEmailOptionsDto);
 
         Task SendEmailForForgotPassword(UserEmailOptionsDto userEmailOptionsDto);
-
     }
 }

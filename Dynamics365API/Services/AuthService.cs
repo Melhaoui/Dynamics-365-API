@@ -55,7 +55,7 @@ namespace Dynamics365API.Services
             }
 
             //Confirmed Email
-            //await GenerateEmailConfirmationTokenAsync(user);
+            await GenerateEmailConfirmationTokenAsync(user);
 
 
             var jwtSecurityToken = await CreateJwtToken(user);

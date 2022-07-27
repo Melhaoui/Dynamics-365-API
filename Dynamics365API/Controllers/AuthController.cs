@@ -12,12 +12,15 @@ namespace Dynamics365API.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ICrmService _crmService;
+       // private readonly IEmailSender _emailSender;
 
         public AuthController(IAuthService authService, ICrmService crmService)
         {
             _authService = authService;
             _crmService = crmService;
+           // _emailSender = emailSender;
         }
+
 
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto model)
@@ -26,9 +29,9 @@ namespace Dynamics365API.Controllers
                 return BadRequest(ModelState);
 
             //check Email exist in CRM
-            var resultCheckEmail = await _crmService.CheckEmailAsync(model.Email);
+            /*var resultCheckEmail = await _crmService.CheckEmailAsync(model.Email);
             if (!resultCheckEmail.IsExisted)
-                return BadRequest(resultCheckEmail.Message);
+                return BadRequest(resultCheckEmail.Message);*/
 
             var result = await _authService.RegisterAsync(model);
 
@@ -110,10 +113,15 @@ namespace Dynamics365API.Controllers
             {
                 var user = await _authService.GetUserByEmailAsync(model.Email);
                 if (user != null)
+                {
                     await _authService.GenerateForgotPasswordTokenAsync(user);
+                    ModelState.Clear();
+                    model.EmailSent = true;
 
-                ModelState.Clear();
-                model.EmailSent = true;
+                }
+                //var message = new Message(new string[] { "tjaaouantaha@gmail.com" }, "Test email", "This is the content from our email.");
+                //_emailSender.SendEmail(message);
+
             }
             return Ok(model);
         }

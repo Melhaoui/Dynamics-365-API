@@ -1,3 +1,4 @@
+using Dynamics365API.Dtos;
 using Dynamics365API.Helpers;
 using Dynamics365API.Models;
 using Dynamics365API.Services;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Configuration;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +27,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 //Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICrmService, CrmService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<CRM, CRM>();
 
 
@@ -54,10 +57,14 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
         };
     });
+//Services SMTP Email
+builder.Services.Configure<SMTP>(builder.Configuration.GetSection("SMTP"));
 
 //Enable CORS 
 builder.Services.AddCors();
-
+//var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+//builder.Services.AddScoped<IEmailSender, EmailSender>();
+//builder.Services.AddSingleton(emailConfig);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
