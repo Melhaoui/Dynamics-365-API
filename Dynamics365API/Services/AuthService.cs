@@ -1,17 +1,12 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 using Dynamics365API.Helpers;
 using Dynamics365API.Models;
 using Dynamics365API.Dtos;
 using Microsoft.AspNetCore.Identity;
-
 namespace Dynamics365API.Services
 {
     public class AuthService : IAuthService
@@ -57,7 +52,6 @@ namespace Dynamics365API.Services
             //Confirmed Email
             await GenerateEmailConfirmationTokenAsync(user);
 
-
             var jwtSecurityToken = await CreateJwtToken(user);
 
             return new AuthDto
@@ -94,6 +88,11 @@ namespace Dynamics365API.Services
             authModel.ExpiresOn = jwtSecurityToken.ValidTo;
 
             return authModel;
+        }
+
+        public async Task<ApplicationUser> GetUserByIdAsync(string id)
+        {
+            return await _userManager.FindByIdAsync(id);
         }
 
         public async Task<ApplicationUser> GetUserByEmailAsync(string email)
@@ -152,7 +151,6 @@ namespace Dynamics365API.Services
         {
             string appDomain = _configuration.GetSection("Application:AppDomain").Value;
             string confirmationLink = _configuration.GetSection("Application:ForgotPassword").Value;
-
             UserEmailOptionsDto options = new UserEmailOptionsDto
             {
                 ToEmails = new List<string>() { user.Email },

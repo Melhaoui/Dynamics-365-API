@@ -29,7 +29,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICrmService, CrmService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<CRM, CRM>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
+//Services SMTP Email
+builder.Services.Configure<SMTP>(builder.Configuration.GetSection("SMTP"));
 
 //Connect DB
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

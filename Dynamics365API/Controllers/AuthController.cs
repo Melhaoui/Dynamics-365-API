@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 using Dynamics365API.Services;
 using Dynamics365API.Dtos;
 using Microsoft.AspNetCore.Authorization;
+using Dynamics365API.Models;
 
 namespace Dynamics365API.Controllers
 {
@@ -12,15 +12,12 @@ namespace Dynamics365API.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ICrmService _crmService;
-       // private readonly IEmailSender _emailSender;
 
         public AuthController(IAuthService authService, ICrmService crmService)
         {
             _authService = authService;
             _crmService = crmService;
-           // _emailSender = emailSender;
         }
-
 
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto model)
@@ -29,9 +26,9 @@ namespace Dynamics365API.Controllers
                 return BadRequest(ModelState);
 
             //check Email exist in CRM
-            /*var resultCheckEmail = await _crmService.CheckEmailAsync(model.Email);
+            var resultCheckEmail = await _crmService.CheckEmailAsync(model.Email);
             if (!resultCheckEmail.IsExisted)
-                return BadRequest(resultCheckEmail.Message);*/
+                return BadRequest(resultCheckEmail.Message);
 
             var result = await _authService.RegisterAsync(model);
 
@@ -63,12 +60,18 @@ namespace Dynamics365API.Controllers
             return Ok(result);
         }
 
-        [HttpGet("confirm-email")]
-        public async Task<IActionResult> ConfirmEmailAsync(string uid, string token, string email)
+        [AllowAnonymous, HttpGet("confirm-email")]
+        public async Task<IActionResult> ConfirmEmailAsync(string uid, string token)
         {
+            ApplicationUser user = new ApplicationUser() { };
+            if (!string.IsNullOrEmpty(uid)) 
+            {
+                user = await _authService.GetUserByIdAsync(uid);
+
+            }
             EmailConfirmDto model = new EmailConfirmDto
             {
-                Email = email
+                Email = user?.Email
             };
 
             if (!string.IsNullOrEmpty(uid) && !string.IsNullOrEmpty(token))
@@ -106,7 +109,7 @@ namespace Dynamics365API.Controllers
             return Ok(model);
         }
 
-        [AllowAnonymous, HttpPost("fotgot-password")]
+        [AllowAnonymous, HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPasswordAsync(ForgotPasswordDto model)
         {
             if (ModelState.IsValid)
@@ -117,11 +120,8 @@ namespace Dynamics365API.Controllers
                     await _authService.GenerateForgotPasswordTokenAsync(user);
                     ModelState.Clear();
                     model.EmailSent = true;
-
                 }
-                //var message = new Message(new string[] { "tjaaouantaha@gmail.com" }, "Test email", "This is the content from our email.");
-                //_emailSender.SendEmail(message);
-
+                
             }
             return Ok(model);
         }
