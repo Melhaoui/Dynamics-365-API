@@ -72,7 +72,7 @@ namespace Dynamics365API.Services
 
             mail.BodyEncoding = Encoding.Default;
 
-            smtpClient.Send(mail);
+            smtpClient.SendAsync(mail, null);
         }
 
         private string GetEmailBody(string templateName)

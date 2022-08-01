@@ -60,14 +60,10 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
         };
     });
-//Services SMTP Email
-builder.Services.Configure<SMTP>(builder.Configuration.GetSection("SMTP"));
 
 //Enable CORS 
 builder.Services.AddCors();
-//var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
-//builder.Services.AddScoped<IEmailSender, EmailSender>();
-//builder.Services.AddSingleton(emailConfig);
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

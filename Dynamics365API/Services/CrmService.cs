@@ -11,15 +11,22 @@ namespace Dynamics365API.Services
     public class CrmService : ICrmService
     {
         private readonly CRM _crm;
+        private readonly IAuthService _authService;
 
-        public CrmService(CRM crm)
+        public CrmService(CRM crm, IAuthService authService)
         {
             _crm = crm;
+            _authService = authService;
         }
 
         public async Task<CrmCheckEmailDto> CheckEmailAsync(string email)
         {
             var crmCheckEmail = new CrmCheckEmailDto { Message = "My Email is saying it does not exist", Email = email };
+
+            //check Email exists DB
+            if (await _authService.GetUserByEmailAsync(email) is not null)
+                crmCheckEmail.Message = "Email is already registered!";
+
             var httpClient = await _crm.GetD365ClientAsync();
             string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
 

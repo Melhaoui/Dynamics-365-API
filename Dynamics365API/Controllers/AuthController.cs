@@ -12,11 +12,13 @@ namespace Dynamics365API.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ICrmService _crmService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthController(IAuthService authService, ICrmService crmService)
+        public AuthController(IAuthService authService, ICrmService crmService, IHttpContextAccessor httpContextAccessor)
         {
             _authService = authService;
             _crmService = crmService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [HttpPost("register")]
@@ -52,8 +54,15 @@ namespace Dynamics365API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMeAsync()
+        {
+            var result = await _authService.GetCurrentUserAsync(_httpContextAccessor);
+            return Ok(result);
+        }
+
         [HttpPost("checkEmail")]
-        public async Task<IActionResult> CheckEmailAsync([FromBody] EmailForRegistration emailDto)
+        public async Task<IActionResult> CheckEmailAsync([FromBody] EmailForRegistrationDto emailDto)
         {
             var result = await _crmService.CheckEmailAsync(emailDto.Email);
 
@@ -65,10 +74,8 @@ namespace Dynamics365API.Controllers
         {
             ApplicationUser user = new ApplicationUser() { };
             if (!string.IsNullOrEmpty(uid)) 
-            {
                 user = await _authService.GetUserByIdAsync(uid);
 
-            }
             EmailConfirmDto model = new EmailConfirmDto
             {
                 Email = user?.Email
@@ -153,7 +160,7 @@ namespace Dynamics365API.Controllers
                 {
                     var errors = string.Empty;
                     foreach (var error in result.Errors)
-                        errors += $"{error.Description},";
+                        model.Message += $"{error.Description},";
 
                     return Ok(model);
                 }

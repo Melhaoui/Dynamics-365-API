@@ -1,6 +1,6 @@
 ﻿namespace Dynamics365API.Dtos
 {
-    public class EmailForRegistration
+    public class EmailForRegistrationDto
     {
         public string Email { get; set; }
     }

@@ -90,6 +90,12 @@ namespace Dynamics365API.Services
             return authModel;
         }
 
+        public async Task<ApplicationUser> GetCurrentUserAsync(IHttpContextAccessor httpContextAccessor)
+        {
+            var email = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Email)?.Value;
+            return await _userManager.FindByEmailAsync(email);
+        }
+
         public async Task<ApplicationUser> GetUserByIdAsync(string id)
         {
             return await _userManager.FindByIdAsync(id);
