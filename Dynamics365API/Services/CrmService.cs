@@ -25,7 +25,11 @@ namespace Dynamics365API.Services
 
             //check Email exists DB
             if (await _authService.GetUserByEmailAsync(email) is not null)
+            {
                 crmCheckEmail.Message = "Email is already registered!";
+                return crmCheckEmail;
+            }
+                
 
             var httpClient = await _crm.GetD365ClientAsync();
             string organizationAPIUrl = _crm.GetOrganizationAPIUrl();

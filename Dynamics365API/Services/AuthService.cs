@@ -56,6 +56,7 @@ namespace Dynamics365API.Services
 
             return new AuthDto
             {
+                FullName = $"{user.FirstName} {user.LastName}",
                 Email = user.Email,
                 ExpiresOn = jwtSecurityToken.ValidTo,
                 IsAuthenticated = true,
@@ -82,6 +83,7 @@ namespace Dynamics365API.Services
 
             var jwtSecurityToken = await CreateJwtToken(user);
 
+            authModel.FullName = $"{user.FirstName} {user.LastName}";
             authModel.IsAuthenticated = true;
             authModel.Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
             authModel.Email = user.Email;
