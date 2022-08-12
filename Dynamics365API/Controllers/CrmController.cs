@@ -12,16 +12,19 @@ namespace Dynamics365API.Controllers
     {
         private readonly ICrmService _crmService;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public CrmController(ICrmService crmService, IHttpContextAccessor httpContextAccessor)
+        private readonly IAuthService _authService;
+
+        public CrmController(ICrmService crmService, IHttpContextAccessor httpContextAccessor, IAuthService authService)
         {
             _crmService = crmService;
             _httpContextAccessor = httpContextAccessor;
+            _authService = authService;
         }
 
         [HttpGet("contacts")]
         public async Task<IActionResult> ContactsAsync()
         {
-            var result = await _crmService.GetEntity("contacts");
+            var result = await _crmService.GetEntityAsync("contacts");
            
             return Ok(result);
         }
@@ -32,7 +35,7 @@ namespace Dynamics365API.Controllers
             var user = _httpContextAccessor.HttpContext?.User;
             var email = user.FindFirst(ClaimTypes.Email).Value;
 
-            var result = await _crmService.GetEntity($"opportunities?$select=name,emailaddress,totalamount,actualclosedate,estimatedclosedate,actualvalue,closeprobability&$filter=emailaddress eq '{email}'");
+            var result = await _crmService.GetEntityAsync($"opportunities?$select=name,emailaddress,totalamount,actualclosedate,estimatedclosedate,actualvalue,closeprobability&$filter=emailaddress eq '{email}'");
             
             
             //emailaddress  name    totalamount( Revenu estimé)  actualclosedate    estimatedclosedate   actualvalue(Revenu réel)  closeprobability
@@ -40,10 +43,40 @@ namespace Dynamics365API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("teamOpportunities")]
+        public async Task<IActionResult> TeamOpportunitiesAsync()
+        {
+            var result = (dynamic)null;
+
+            var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
+            if (user is null)
+                return result;
+
+            result = await _crmService.GetTeamOpportunitiesAsync(user.Email);
+
+            return Ok(result);
+        }
+
+        [HttpGet("allOpportunities")]
+        public async Task<IActionResult> AllOpportunitiesAsync()
+        {
+            var result = await _crmService.GetEntityAsync("opportunities");
+
+            return Ok(result);
+        }
+
+        [HttpGet("accounts")]
+        public async Task<IActionResult> AccountsAsync()
+        {
+            var result = await _crmService.GetEntityAsync("accounts");
+
+            return Ok(result);
+        }
+
         [HttpPost("AddAccount")]
         public async Task<IActionResult> AddAccountAsync([FromBody] object obj)
         {
-            var result = await _crmService.AddEntity("opportunities?$select=name", obj);
+            var result = await _crmService.AddEntityAsync("opportunities?$select=name", obj);
             //?$filter=contains(emailaddress,'miguel@northwindtraders.com')
             return Ok(result);
         }

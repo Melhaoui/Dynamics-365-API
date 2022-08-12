@@ -57,8 +57,17 @@ namespace Dynamics365API.Controllers
         [HttpGet("me")]
         public async Task<IActionResult> GetMeAsync()
         {
+            MeDto meDto = new MeDto() { };
             var result = await _authService.GetCurrentUserAsync(_httpContextAccessor);
-            return Ok(result);
+            if (result is not null)
+            {
+                meDto.Id = result.Id;
+                meDto.Firstname = result.FirstName;
+                meDto.Lastname = result.LastName;
+                meDto.Email = result.Email;
+            }
+
+            return Ok(meDto);
         }
 
         [HttpPost("checkEmail")]

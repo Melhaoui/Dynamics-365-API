@@ -1,4 +1,3 @@
-using Dynamics365API.Dtos;
 using Dynamics365API.Helpers;
 using Dynamics365API.Models;
 using Dynamics365API.Services;
@@ -6,7 +5,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Configuration;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,7 +27,6 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICrmService, CrmService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<CRM, CRM>();
-builder.Services.AddScoped<IEmailService, EmailService>();
 
 //Services SMTP Email
 builder.Services.Configure<SMTP>(builder.Configuration.GetSection("SMTP"));

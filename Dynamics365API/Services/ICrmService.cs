@@ -7,8 +7,10 @@ namespace Dynamics365API.Services
     {
         Task<CrmCheckEmailDto> CheckEmailAsync(string email);
 
-        Task<object> GetEntity(string entityQuery);
+        Task<object> GetEntityAsync(string entityQuery);
 
-        Task<string> AddEntity(string entityQuery, object jsonObject);
+        Task<object> GetTeamOpportunitiesAsync(string email);
+
+        Task<string> AddEntityAsync(string entityQuery, object jsonObject);
     }
 }
