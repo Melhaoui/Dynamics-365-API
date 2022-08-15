@@ -78,7 +78,7 @@ namespace Dynamics365API.Controllers
             return Ok(result);
         }
 
-        [AllowAnonymous, HttpGet("confirm-email")]
+        [HttpGet("confirm-email")]
         public async Task<IActionResult> ConfirmEmailAsync(string uid, string token)
         {
             ApplicationUser user = new ApplicationUser() { };
@@ -125,7 +125,7 @@ namespace Dynamics365API.Controllers
             return Ok(model);
         }
 
-        [AllowAnonymous, HttpPost("forgot-password")]
+        [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPasswordAsync(ForgotPasswordDto model)
         {
             if (ModelState.IsValid)
@@ -142,7 +142,7 @@ namespace Dynamics365API.Controllers
             return Ok(model);
         }
 
-        [AllowAnonymous, HttpGet("reset-password")]
+        [HttpGet("reset-password")]
         public IActionResult ResetPasswordAsync(string uid, string token)
         {
             ResetPasswordDto resetPasswordModel = new ResetPasswordDto
@@ -153,7 +153,7 @@ namespace Dynamics365API.Controllers
             return Ok(resetPasswordModel);
         }
 
-        [AllowAnonymous, HttpPost("reset-password")]
+        [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPasswordAsync(ResetPasswordDto model)
         {
             if (ModelState.IsValid)

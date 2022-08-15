@@ -1,5 +1,6 @@
 ﻿using Dynamics365API.Dtos;
 using Dynamics365API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -8,6 +9,7 @@ namespace Dynamics365API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CrmController : ControllerBase
     {
         private readonly ICrmService _crmService;
@@ -53,6 +55,15 @@ namespace Dynamics365API.Controllers
                 return result;
 
             result = await _crmService.GetTeamOpportunitiesAsync(user.Email);
+
+            return Ok(result);
+        }
+
+        [HttpGet("profileDetails")]
+        public async Task<IActionResult> ProfileAsync()
+        {
+            var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
+            var result = await _crmService.GetEntityAsync($"contacts?$select=contactid, firstname,lastname, emailaddress1, jobtitle, telephone1, mobilephone, fax, preferredcontactmethodcode, address1_line1, address1_line2, address1_line3, address1_stateorprovince, address1_postalcode, address1_country, gendercode, familystatuscode, spousesname, birthdate, anniversary&$expand=parentcustomerid_account($select=name)&$filter=emailaddress1 eq '{user.Email}'");
 
             return Ok(result);
         }

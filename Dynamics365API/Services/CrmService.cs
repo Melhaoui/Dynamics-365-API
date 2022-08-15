@@ -87,7 +87,7 @@ namespace Dynamics365API.Services
                     return result;
 
                 var allEmailTeamNotPrimaryFilter = string.Join(" or ", allEmailTeamNotPrimary);
-                result = await httpClient.GetFromJsonAsync<object>(organizationAPIUrl + $"opportunities?$select=name,emailaddress,totalamount,actualclosedate,estimatedclosedate,actualvalue,closeprobability&$filter=emailaddress eq 'miguel@northwindtraders.com' ");
+                result = await httpClient.GetFromJsonAsync<object>(organizationAPIUrl + $"opportunities?$select=name,emailaddress,totalamount,actualclosedate,estimatedclosedate,actualvalue,closeprobability&$filter={allEmailTeamNotPrimaryFilter} ");
 
                 return result;
 
