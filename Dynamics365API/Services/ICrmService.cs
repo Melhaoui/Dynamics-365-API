@@ -12,5 +12,7 @@ namespace Dynamics365API.Services
         Task<object> GetTeamOpportunitiesAsync(string email);
 
         Task<string> AddEntityAsync(string entityQuery, object jsonObject);
+
+        Task<object> CrudCrm(HttpMethod httpMethod, string requestUri, object body);
     }
 }

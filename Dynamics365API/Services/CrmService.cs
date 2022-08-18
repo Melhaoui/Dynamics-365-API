@@ -7,6 +7,7 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json.Linq;
 using System.Linq;
+using System.Net;
 
 namespace Dynamics365API.Services
 {
@@ -78,7 +79,6 @@ namespace Dynamics365API.Services
                 return result;
             else
             {
-                //return allEmailTeam;
                 string accountId = account?.Value?.Select(c => c.AccountId)?.FirstOrDefault()?.ToString();
                 var allEmailTeam = await httpClient.GetFromJsonAsync<TeamOpportunitiesDataDto<TeamOpportunitiesAllEmailDto>>(organizationAPIUrl + $"contacts?$select=emailaddress1&$filter=_parentcustomerid_value eq {accountId} ");
                 var allEmailTeamNotPrimary = allEmailTeam.Value.Select(e => "emailaddress eq '" + e.Emailaddress1 + "'").Where(x => x != "emailaddress eq '" + email + "'").ToList();
@@ -90,10 +90,34 @@ namespace Dynamics365API.Services
                 result = await httpClient.GetFromJsonAsync<object>(organizationAPIUrl + $"opportunities?$select=name,emailaddress,totalamount,actualclosedate,estimatedclosedate,actualvalue,closeprobability&$filter={allEmailTeamNotPrimaryFilter} ");
 
                 return result;
-
             }
 
             return result;
+        }
+
+        public async Task<object> CrudCrm(HttpMethod httpMethod, string entityQuery, object body)
+        {
+            CrudCrmDto crudCrmDto = new CrudCrmDto()
+            {
+                Message = "Something is wrong",
+                Data = body,
+            };
+
+            var httpClient = await _crm.GetD365ClientAsync();
+            string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
+
+            httpClient.BaseAddress = new Uri(organizationAPIUrl);
+            JObject jsonBody = JObject.FromObject(body);
+            HttpRequestMessage updateRequest1 = new HttpRequestMessage(httpMethod, entityQuery)
+            {
+                Content = new StringContent(jsonBody.ToString(), Encoding.UTF8, "application/json")
+            };
+
+            HttpResponseMessage updateResponse1 = await httpClient.SendAsync(updateRequest1);
+            if (updateResponse1.StatusCode == HttpStatusCode.NoContent)
+                crudCrmDto.Message = "successfully";
+
+            return crudCrmDto;
         }
 
         //------------------------------AddEntity Not working------------------------------------------------------------------

@@ -3,6 +3,7 @@ using Dynamics365API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using System.Security.Claims;
 
 namespace Dynamics365API.Controllers
@@ -63,7 +64,24 @@ namespace Dynamics365API.Controllers
         public async Task<IActionResult> ProfileAsync()
         {
             var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
-            var result = await _crmService.GetEntityAsync($"contacts?$select=contactid, firstname,lastname, emailaddress1, jobtitle, telephone1, mobilephone, fax, preferredcontactmethodcode, address1_line1, address1_line2, address1_line3, address1_stateorprovince, address1_postalcode, address1_country, gendercode, familystatuscode, spousesname, birthdate, anniversary&$expand=parentcustomerid_account($select=name)&$filter=emailaddress1 eq '{user.Email}'");
+            var result = await _crmService.GetEntityAsync($"contacts?$select=contactid, firstname,lastname, jobtitle, emailaddress1, telephone1, mobilephone, fax, preferredcontactmethodcode, address1_line1, address1_line2, address1_line3, address1_city, address1_stateorprovince, address1_postalcode, address1_country, entityimage_url, gendercode, familystatuscode, spousesname, birthdate, anniversary&$expand=parentcustomerid_account($select=name)&$filter=emailaddress1 eq '{user.Email}'");
+
+            return Ok(result);
+        }
+
+        [HttpPut("profileUpdate")]
+        public async Task<IActionResult> UpdateAccountAsync([FromBody] ProfileDto profileDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
+            var contact = await _crmService.GetEntityAsync($"contacts?$select=contactid&$filter=contains(emailaddress1, '{user.Email}')");
+            var values = JObject.Parse(contact.ToString());
+            var Contactid = values.SelectToken("value[0].contactid").ToString();
+            Contactid = Contactid.Trim(new Char[] { '{', '}' });
+
+            var result = await _crmService.CrudCrm(HttpMethod.Patch, $"contacts({Contactid})", profileDto);
 
             return Ok(result);
         }
