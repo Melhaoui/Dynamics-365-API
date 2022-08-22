@@ -67,12 +67,13 @@ namespace Dynamics365API.Services
         {
             var httpClient = await _crm.GetD365ClientAsync();
             string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
-
-            var contact = await httpClient.GetFromJsonAsync<CrmContactIsPrimary>(organizationAPIUrl + $"contacts?$select=contactid&$filter=contains(emailaddress1, '{email}')&$expand=parentcustomerid_account($select=_primarycontactid_value)");
-            if (contact?.value.Count > 0 )
+            var contact = await httpClient.GetFromJsonAsync<object>(organizationAPIUrl + $"contacts?$select=contactid&$filter=contains(emailaddress1, '{email}')&$expand=parentcustomerid_account($select=_primarycontactid_value)");
+            var data = JObject.Parse(contact.ToString());
+            if (data?.SelectToken("value[0]")?.ToString().Length > 0 )
             {
-                var data = string.Join(", ", contact?.value).Split(",");
-                if (data[1].Substring(data[1].LastIndexOf(':') + 1) == data[5].Substring(data[5].LastIndexOf(':') + 1))
+                string contactId = data.SelectToken("value[0].contactid").ToString();
+                string primaryContactId = data.SelectToken("value[0].parentcustomerid_account._primarycontactid_value").ToString();
+                if (contactId == primaryContactId)
                     return true;
             } 
 
