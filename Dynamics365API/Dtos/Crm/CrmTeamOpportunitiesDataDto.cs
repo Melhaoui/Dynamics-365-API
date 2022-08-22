@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Dynamics365API.Dtos
+namespace Dynamics365API.Dtos.Crm
 {
-    public class TeamOpportunitiesDataDto<T>
+    public class CrmTeamOpportunitiesDataDto<T>
     {
         [Display(Name = "@odata.context")]
         public string OdataContext { get; set; }

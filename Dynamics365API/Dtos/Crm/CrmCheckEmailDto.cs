@@ -1,4 +1,4 @@
-﻿namespace Dynamics365API.Dtos
+﻿namespace Dynamics365API.Dtos.Crm
 {
     public class CrmCheckEmailDto
     {

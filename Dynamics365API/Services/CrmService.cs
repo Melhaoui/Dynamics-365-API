@@ -1,5 +1,4 @@
-﻿using Dynamics365API.Dtos;
-using Dynamics365API.Helpers;
+﻿using Dynamics365API.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Security.Claims;
@@ -8,6 +7,9 @@ using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Net;
+using System.Web.Http;
+using Dynamics365API.Dtos.Crm;
+using System.Collections.Generic;
 
 namespace Dynamics365API.Services
 {
@@ -61,43 +63,40 @@ namespace Dynamics365API.Services
             return result;
         }
 
-        public async Task<object> GetTeamOpportunitiesAsync(string email)
+        public async Task<bool> GetContactIsPrimaryAsync(string email)
         {
-            var result = (dynamic)null;
-
             var httpClient = await _crm.GetD365ClientAsync();
             string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
 
-
-            var contact = await httpClient.GetFromJsonAsync<TeamOpportunitiesDataDto<TeamOpportunitiesValueDto>>(organizationAPIUrl + $"contacts?$select=contactid&$filter=contains(emailaddress1, '{email}') ");
-            if (contact is null || contact?.Value?.Count == 0)
-                return result;
-
-            string contactId = contact?.Value?.Select(c => c.ContactId)?.FirstOrDefault()?.ToString();
-            var account = await httpClient.GetFromJsonAsync<TeamOpportunitiesDataDto<TeamOpportunitiesValueDto>>(organizationAPIUrl + $"accounts?$select=accountid&$filter=primarycontactid/contactid eq {contactId} "); 
-            if (account is null || account?.Value?.Count == 0)
-                return result;
-            else
+            var contact = await httpClient.GetFromJsonAsync<CrmContactIsPrimary>(organizationAPIUrl + $"contacts?$select=contactid&$filter=contains(emailaddress1, '{email}')&$expand=parentcustomerid_account($select=_primarycontactid_value)");
+            if (contact?.value.Count > 0 )
             {
-                string accountId = account?.Value?.Select(c => c.AccountId)?.FirstOrDefault()?.ToString();
-                var allEmailTeam = await httpClient.GetFromJsonAsync<TeamOpportunitiesDataDto<TeamOpportunitiesAllEmailDto>>(organizationAPIUrl + $"contacts?$select=emailaddress1&$filter=_parentcustomerid_value eq {accountId} ");
-                var allEmailTeamNotPrimary = allEmailTeam.Value.Select(e => "emailaddress eq '" + e.Emailaddress1 + "'").Where(x => x != "emailaddress eq '" + email + "'").ToList();
+                var data = string.Join(", ", contact?.value).Split(",");
+                if (data[1].Substring(data[1].LastIndexOf(':') + 1) == data[5].Substring(data[5].LastIndexOf(':') + 1))
+                    return true;
+            } 
 
-                if (allEmailTeamNotPrimary is null || allEmailTeamNotPrimary?.Count == 0)
-                    return result;
+            return false;
+        }
 
-                var allEmailTeamNotPrimaryFilter = string.Join(" or ", allEmailTeamNotPrimary);
-                result = await httpClient.GetFromJsonAsync<object>(organizationAPIUrl + $"opportunities?$select=name,emailaddress,totalamount,actualclosedate,estimatedclosedate,actualvalue,closeprobability&$filter={allEmailTeamNotPrimaryFilter} ");
+        public async Task<object> GetTeamOpportunitiesAsync(string email)
+        {
+            var httpClient = await _crm.GetD365ClientAsync();
+            string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
 
-                return result;
-            }
+            string contactId = await GetContactAsync(email);
+            string accountId = await GetAccountAsync(contactId);
+
+            var allEmailTeamNotPrimary = await GetAllEmailTeamNotPrimaryAsync(accountId, email);
+            var allEmailTeamNotPrimaryFilter = string.Join(" or ", allEmailTeamNotPrimary);
+            var result = await httpClient.GetFromJsonAsync<object>(organizationAPIUrl + $"opportunities?$select=name,emailaddress,totalamount,actualclosedate,estimatedclosedate,actualvalue,closeprobability&$filter={allEmailTeamNotPrimaryFilter} ");
 
             return result;
         }
 
-        public async Task<object> CrudCrm(HttpMethod httpMethod, string entityQuery, object body)
+        public async Task<object> CrmCrud(HttpMethod httpMethod, string entityQuery, object body)
         {
-            CrudCrmDto crudCrmDto = new CrudCrmDto()
+            CrmCrudDto crudCrmDto = new()
             {
                 Message = "Something is wrong",
                 Data = body,
@@ -118,6 +117,48 @@ namespace Dynamics365API.Services
                 crudCrmDto.Message = "successfully";
 
             return crudCrmDto;
+        }
+
+        private async Task<string> GetContactAsync(string email)
+        {
+            var httpClient = await _crm.GetD365ClientAsync();
+            string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
+
+            var contact = await httpClient.GetFromJsonAsync<CrmTeamOpportunitiesDataDto<CrmTeamOpportunitiesValueDto>>(organizationAPIUrl + $"contacts?$select=contactid&$filter=contains(emailaddress1, '{email}') ");
+            if (contact is null || contact?.Value?.Count == 0)
+                throw new HttpResponseException(HttpStatusCode.NotFound);
+
+            var contactId =  contact?.Value?.Select(c => c.ContactId)?.FirstOrDefault()?.ToString();
+
+            return contactId;
+        }
+
+        private async Task<string> GetAccountAsync(string contactId)
+        {
+            var httpClient = await _crm.GetD365ClientAsync();
+            string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
+
+            var account = await httpClient.GetFromJsonAsync<CrmTeamOpportunitiesDataDto<CrmTeamOpportunitiesValueDto>>(organizationAPIUrl + $"accounts?$select=accountid&$filter=primarycontactid/contactid eq {contactId} ");
+            if (account is null || account?.Value?.Count == 0)
+                throw new HttpResponseException(HttpStatusCode.NotFound);
+
+            var accountId = account?.Value?.Select(c => c.AccountId)?.FirstOrDefault()?.ToString();
+
+            return accountId;
+        }
+
+        private async Task<List<string>> GetAllEmailTeamNotPrimaryAsync(string accountId, string email)
+        {
+            var httpClient = await _crm.GetD365ClientAsync();
+            string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
+
+            var allEmailTeam = await httpClient.GetFromJsonAsync<CrmTeamOpportunitiesDataDto<CrmTeamOpportunitiesAllEmailDto>>(organizationAPIUrl + $"contacts?$select=emailaddress1&$filter=_parentcustomerid_value eq {accountId} ");
+            var allEmailTeamNotPrimary = allEmailTeam.Value.Select(e => "emailaddress eq '" + e.Emailaddress1 + "'").Where(x => x != "emailaddress eq '" + email + "'").ToList();
+
+            if (allEmailTeamNotPrimary is null || allEmailTeamNotPrimary?.Count == 0)
+                throw new HttpResponseException(HttpStatusCode.NotFound);
+
+            return allEmailTeamNotPrimary;
         }
 
         //------------------------------AddEntity Not working------------------------------------------------------------------

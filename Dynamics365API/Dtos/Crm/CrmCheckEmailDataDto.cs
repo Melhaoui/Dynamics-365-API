@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Dynamics365API.Dtos
+namespace Dynamics365API.Dtos.Crm
 {
     public class CrmCheckEmailDataDto
     {

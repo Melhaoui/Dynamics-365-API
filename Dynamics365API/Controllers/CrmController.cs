@@ -10,7 +10,7 @@ namespace Dynamics365API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class CrmController : ControllerBase
     {
         private readonly ICrmService _crmService;
@@ -70,7 +70,7 @@ namespace Dynamics365API.Controllers
         }
 
         [HttpPut("profileUpdate")]
-        public async Task<IActionResult> UpdateAccountAsync([FromBody] ProfileDto profileDto)
+        public async Task<IActionResult> ProfileUpdateAsync([FromBody] ProfileDto profileDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -81,7 +81,7 @@ namespace Dynamics365API.Controllers
             var Contactid = values.SelectToken("value[0].contactid").ToString();
             Contactid = Contactid.Trim(new Char[] { '{', '}' });
 
-            var result = await _crmService.CrudCrm(HttpMethod.Patch, $"contacts({Contactid})", profileDto);
+            var result = await _crmService.CrmCrud(HttpMethod.Patch, $"contacts({Contactid})", profileDto);
 
             return Ok(result);
         }

@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Dynamics365API.Dtos
+namespace Dynamics365API.Dtos.Crm
 {
-    public class TeamOpportunitiesAllEmailDto
+    public class CrmTeamOpportunitiesAllEmailDto
     {
         [Display(Name = "@odata.etag")]
         public string? OdataEtag { get; set; }

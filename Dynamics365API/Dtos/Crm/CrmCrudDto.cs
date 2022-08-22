@@ -1,6 +1,6 @@
-﻿namespace Dynamics365API.Dtos
+﻿namespace Dynamics365API.Dtos.Crm
 {
-    public class CrudCrmDto
+    public class CrmCrudDto
     {
         public string Message { get; set; }
         public object Data { get; set; }
