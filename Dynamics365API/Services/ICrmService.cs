@@ -11,7 +11,7 @@ namespace Dynamics365API.Services
 
         Task<bool> GetContactIsPrimaryAsync(string email);
 
-        Task<object> GetTeamOpportunitiesAsync(string email);
+        Task<string> GetAllEmailTeamAsync(string email, string queryEamil);
 
         Task<string> AddEntityAsync(string entityQuery, object jsonObject);
 

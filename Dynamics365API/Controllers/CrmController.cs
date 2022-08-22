@@ -50,12 +50,20 @@ namespace Dynamics365API.Controllers
         public async Task<IActionResult> TeamOpportunitiesAsync()
         {
             var result = (dynamic)null;
-
             var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
-            if (user is null)
-                return result;
+            var allEmailTeamNotPrimaryFilter = await _crmService.GetAllEmailTeamAsync(user.Email, "emailaddress");
+            result = await _crmService.GetEntityAsync($"opportunities?$select=name,emailaddress,totalamount,actualclosedate,estimatedclosedate,actualvalue,closeprobability&$filter={allEmailTeamNotPrimaryFilter} ");
 
-            result = await _crmService.GetTeamOpportunitiesAsync(user.Email);
+            return Ok(result);
+        }
+
+        [HttpGet("teamContacts")]
+        public async Task<IActionResult> TeamContactsAsync()
+        {
+            var result = (dynamic)null;
+            var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
+            var allEmailTeamNotPrimaryFilter = await _crmService.GetAllEmailTeamAsync(user.Email, "emailaddress1");
+            result = await _crmService.GetEntityAsync($"contacts?$select=fullname, emailaddress1, telephone1&$filter={allEmailTeamNotPrimaryFilter} ");
 
             return Ok(result);
         }
