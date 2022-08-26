@@ -37,8 +37,10 @@ namespace Dynamics365API.Controllers
         {
             var user = _httpContextAccessor.HttpContext?.User;
             var email = user.FindFirst(ClaimTypes.Email).Value;
-
-            var result = await _crmService.GetEntityAsync($"opportunities?$select=name,emailaddress,totalamount,actualclosedate,estimatedclosedate,actualvalue,closeprobability&$filter=emailaddress eq '{email}'");
+            string Query = $"opportunities" +
+                           $"?$select=name,emailaddress,totalamount,actualclosedate,estimatedclosedate,actualvalue,closeprobability" +
+                           $"&$filter=emailaddress eq '{email}'";
+            var result = await _crmService.GetEntityAsync(Query);
             
             
             //emailaddress  name    totalamount( Revenu estimé)  actualclosedate    estimatedclosedate   actualvalue(Revenu réel)  closeprobability
@@ -52,7 +54,11 @@ namespace Dynamics365API.Controllers
             var result = (dynamic)null;
             var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
             var allEmailTeamNotPrimaryFilter = await _crmService.GetAllEmailTeamAsync(user.Email, "emailaddress");
-            result = await _crmService.GetEntityAsync($"opportunities?$select=name,emailaddress,totalamount,actualclosedate,estimatedclosedate,actualvalue,closeprobability&$filter={allEmailTeamNotPrimaryFilter} ");
+            string Query = $"opportunities" +
+                           $"?$select=name,emailaddress,totalamount" +
+                           $",actualclosedate,estimatedclosedate,actualvalue,closeprobability" +
+                           $"&$filter={allEmailTeamNotPrimaryFilter} ";
+            result = await _crmService.GetEntityAsync(Query);
 
             return Ok(result);
         }
@@ -63,7 +69,10 @@ namespace Dynamics365API.Controllers
             var result = (dynamic)null;
             var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
             var allEmailTeamNotPrimaryFilter = await _crmService.GetAllEmailTeamAsync(user.Email, "emailaddress1");
-            result = await _crmService.GetEntityAsync($"contacts?$select=fullname, emailaddress1, telephone1&$filter={allEmailTeamNotPrimaryFilter} ");
+            string Query = $"contacts" +
+                           $"?$select=fullname, emailaddress1, telephone1" +
+                           $"&$filter={allEmailTeamNotPrimaryFilter} ";
+            result = await _crmService.GetEntityAsync(Query);
 
             return Ok(result);
         }
@@ -72,7 +81,14 @@ namespace Dynamics365API.Controllers
         public async Task<IActionResult> ProfileAsync()
         {
             var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
-            var result = await _crmService.GetEntityAsync($"contacts?$select=contactid, firstname,lastname, jobtitle, emailaddress1, telephone1, mobilephone, fax, preferredcontactmethodcode, address1_line1, address1_line2, address1_line3, address1_city, address1_stateorprovince, address1_postalcode, address1_country, entityimage_url, gendercode, familystatuscode, spousesname, birthdate, anniversary&$expand=parentcustomerid_account($select=name)&$filter=emailaddress1 eq '{user.Email}'");
+            string Query =
+                $"contacts" +
+                $"?$select=contactid, firstname,lastname, jobtitle, emailaddress1, telephone1, mobilephone, fax, " +
+                $"preferredcontactmethodcode, address1_line1, address1_line2, address1_line3, address1_city, address1_stateorprovince," +
+                $"address1_postalcode, address1_country, entityimage, gendercode, familystatuscode, spousesname, birthdate, anniversary" +
+                $"&$expand=parentcustomerid_account($select=name)" +
+                $"&$filter=emailaddress1 eq '{user.Email}'";
+            var result = await _crmService.GetEntityAsync(Query);
 
             return Ok(result);
         }
@@ -82,13 +98,12 @@ namespace Dynamics365API.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
             var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
-            var contact = await _crmService.GetEntityAsync($"contacts?$select=contactid&$filter=contains(emailaddress1, '{user.Email}')");
+            string Query = $"contacts?$select=contactid&$filter=contains(emailaddress1, '{user.Email}')";
+            var contact = await _crmService.GetEntityAsync(Query);
             var values = JObject.Parse(contact.ToString());
             var Contactid = values.SelectToken("value[0].contactid").ToString();
             Contactid = Contactid.Trim(new Char[] { '{', '}' });
-
             var result = await _crmService.CrmCrud(HttpMethod.Patch, $"contacts({Contactid})", profileDto);
 
             return Ok(result);
@@ -110,13 +125,6 @@ namespace Dynamics365API.Controllers
             return Ok(result);
         }
 
-        [HttpPost("AddAccount")]
-        public async Task<IActionResult> AddAccountAsync([FromBody] object obj)
-        {
-            var result = await _crmService.AddEntityAsync("opportunities?$select=name", obj);
-            //?$filter=contains(emailaddress,'miguel@northwindtraders.com')
-            return Ok(result);
-        }
 
     }
 }
