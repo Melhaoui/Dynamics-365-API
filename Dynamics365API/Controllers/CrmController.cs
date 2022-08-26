@@ -124,7 +124,5 @@ namespace Dynamics365API.Controllers
 
             return Ok(result);
         }
-
-
     }
 }

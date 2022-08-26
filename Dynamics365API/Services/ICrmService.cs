@@ -14,5 +14,8 @@ namespace Dynamics365API.Services
         Task<string> GetAllEmailTeamAsync(string email, string queryEamil);
 
         Task<object> CrmCrud(HttpMethod httpMethod, string requestUri, object body);
+
+        //--------------------------------- Dashboard ---------------------------------//
+        Task<object> GetOpportunitiesStatusCodeCountAsync(string email);
     }
 }

@@ -66,13 +66,7 @@ namespace Dynamics365API.Services
 
         public async Task<bool> GetContactIsPrimaryAsync(string email)
         {
-            var httpClient = await _crm.GetD365ClientAsync();
-            string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
-            organizationAPIUrl += $"contacts?" +
-                                    $"$select=contactid" +
-                                    $"&$filter=contains(emailaddress1, '{email}')" +
-                                    $"&$expand=parentcustomerid_account($select=_primarycontactid_value)";
-            var contact = await httpClient.GetFromJsonAsync<object>(organizationAPIUrl);
+            var contact = await GetAccountByContactEmailAsync(email);
             var data = JObject.Parse(contact.ToString());
             if (data?.SelectToken("value[0]")?.ToString().Length > 0 )
             {
@@ -101,7 +95,6 @@ namespace Dynamics365API.Services
             CrmCrudDto crudCrmDto = new()
             {
                 Message = "Something is wrong",
-                Data = body,
             };
 
             var httpClient = await _crm.GetD365ClientAsync();
@@ -119,6 +112,21 @@ namespace Dynamics365API.Services
                 crudCrmDto.Message = "successfully";
 
             return crudCrmDto;
+        }
+
+        //--------------------------------- Dashboard ---------------------------------//
+        public async Task<object> GetOpportunitiesStatusCodeCountAsync(string email)
+        {
+            var result = (dynamic)null;
+            var contact = await GetAccountByContactEmailAsync(email);
+            var data = JObject.Parse(contact.ToString());
+            if (data?.SelectToken("value[0]")?.ToString().Length > 0)
+            {
+                string accountId = data.SelectToken("value[0].parentcustomerid_account.accountid").ToString();
+                string query = $"opportunities?$apply=groupby((statuscode),aggregate(opportunityid with countdistinct as count))&$filter=_parentaccountid_value eq '{accountId}'";
+                result = await GetEntityAsync(query);
+            }
+            return result;
         }
 
         private async Task<string> GetContactAsync(string email)
@@ -168,6 +176,16 @@ namespace Dynamics365API.Services
                 throw new HttpResponseException(HttpStatusCode.NotFound);
 
             return allEmailTeamNotPrimary;
+        }
+
+        private async Task<object> GetAccountByContactEmailAsync(string email)
+        {
+            string query = $"contacts?$select=contactid"+
+                           $"&$filter=contains(emailaddress1, '{email}')"+
+                           $"&$expand=parentcustomerid_account($select=_primarycontactid_value)";
+            var result = await GetEntityAsync(query);
+
+            return result;
         }
     }
 }
