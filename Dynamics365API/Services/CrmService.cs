@@ -123,7 +123,8 @@ namespace Dynamics365API.Services
             if (data?.SelectToken("value[0]")?.ToString().Length > 0)
             {
                 string accountId = data.SelectToken("value[0].parentcustomerid_account.accountid").ToString();
-                string query = $"opportunities?$apply=groupby((statuscode),aggregate(opportunityid with countdistinct as count))&$filter=_parentaccountid_value eq '{accountId}'";
+                string query = $"opportunities?$apply=groupby((statuscode),aggregate(opportunityid with countdistinct as count))" +
+                               $"&$filter=_parentaccountid_value eq '{accountId}'";
                 result = await GetEntityAsync(query);
             }
             return result;
