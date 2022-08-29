@@ -81,7 +81,13 @@ namespace Dynamics365API.Controllers
         [HttpPost("contactDetails")]
         public async Task<IActionResult> ProfileAsync([FromBody] CrmContactDetails crmContactDetails)
         {
-            var result = await _crmService.GetEntityAsync($"contacts?$select=contactid, firstname,lastname, jobtitle, emailaddress1, telephone1, mobilephone, fax, preferredcontactmethodcode, address1_line1, address1_line2, address1_line3, address1_city, address1_stateorprovince, address1_postalcode, address1_country, entityimage_url, gendercode, familystatuscode, spousesname, birthdate, anniversary&$expand=parentcustomerid_account($select=name)&$filter=emailaddress1 eq '{crmContactDetails.Email}'");
+            string Query = $"contacts" +
+                $"?$select=contactid, firstname,lastname, jobtitle, emailaddress1, telephone1, mobilephone, fax, preferredcontactmethodcode, " +
+                $"address1_line1, address1_line2, address1_line3, address1_city, address1_stateorprovince, address1_postalcode, address1_country," +
+                $" entityimage_url, gendercode, familystatuscode, spousesname, birthdate, anniversary" +
+                $"&$expand=parentcustomerid_account($select=name)" +
+                $"&$filter=emailaddress1 eq '{crmContactDetails.Email}'";
+            var result = await _crmService.GetEntityAsync(Query);
 
             return Ok(result);
         }

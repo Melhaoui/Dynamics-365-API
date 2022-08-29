@@ -27,5 +27,14 @@ namespace Dynamics365API.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("opportunitiesEstimatedRevenue")]
+        public async Task<IActionResult> OpportunitiesEstimatedRevenue()
+        {
+            var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
+            var result = await _crmService.GetOpportunitiesEstmatedRevenueAsync(user.Email);
+
+            return Ok(result);
+        }
     }
 }

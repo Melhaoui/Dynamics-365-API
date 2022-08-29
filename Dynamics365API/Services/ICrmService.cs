@@ -18,5 +18,7 @@ namespace Dynamics365API.Services
 
         //--------------------------------- Dashboard ---------------------------------//
         Task<object> GetOpportunitiesStatusCodeCountAsync(string email);
+
+        Task<object> GetOpportunitiesEstmatedRevenueAsync(string email);
     }
 }

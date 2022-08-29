@@ -135,6 +135,34 @@ namespace Dynamics365API.Services
             return result;
         }
 
+
+        public async Task<object> GetOpportunitiesEstmatedRevenueAsync(string email)
+        {
+            //var result = (dynamic)null;
+            var httpClient = await _crm.GetD365ClientAsync();
+            string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
+            
+            var account = await GetAccountByContactEmailAsync(email);
+            var data = JObject.Parse(account.ToString());
+            if (data?.SelectToken("value[0]")?.ToString().Length > 0)
+            {
+                string accountId = data.SelectToken("value[0].parentcustomerid_account.accountid").ToString();
+                organizationAPIUrl += $"opportunities" +
+                                      $"?$select=estimatedclosedate,estimatedvalue" +
+                                      //$"&$apply=groupby((estimatedclosedate),aggregate(estimatedvalue with sum as total))" +
+                                      $"&$filter=_parentaccountid_value eq '{accountId}'";
+
+               var result = await httpClient.GetFromJsonAsync<CrmDataDto<CrmOpportunitiesRevenue>>(organizationAPIUrl);
+                var query = result.Value.GroupBy(p => p.estimatedclosedate,
+                                                 p => p.estimatedvalue,
+                                                 (key, g) => new { estimatedclosedate = key, estimatedvalue = g.Sum() });
+
+                return query;
+            }
+
+            return null;
+        }
+
         private async Task<string> GetContactIdAsync(string email)
         {
             var httpClient = await _crm.GetD365ClientAsync();
