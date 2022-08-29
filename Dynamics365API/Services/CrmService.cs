@@ -55,20 +55,6 @@ namespace Dynamics365API.Services
             return crmCheckEmail;
         }
 
-        public async Task<string> GetEntityImageAsync(string email)
-        {
-            var httpClient = await _crm.GetD365ClientAsync();
-            string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
-
-            organizationAPIUrl += "contacts" +
-                                  "?$select=entityimage" +
-                                  "&$filter=contains(emailaddress1,'" + email + "')";
-            var contact = await httpClient.GetFromJsonAsync<CrmDataDto<MeDto>>(organizationAPIUrl);
-            var entityImage = contact?.Value?.Select(c => c.entityimage)?.FirstOrDefault()?.ToString();
-
-            return entityImage;
-        }
-
         public async Task<object> GetEntityAsync(string entityQuery)
         {
             var httpClient = await _crm.GetD365ClientAsync();
