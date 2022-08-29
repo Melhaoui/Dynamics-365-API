@@ -1,4 +1,5 @@
-﻿using Dynamics365API.Dtos.Crm;
+﻿using Dynamics365API.Dtos;
+using Dynamics365API.Dtos.Crm;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dynamics365API.Services
@@ -9,7 +10,7 @@ namespace Dynamics365API.Services
 
         Task<object> GetEntityAsync(string entityQuery);
 
-        Task<bool> GetContactIsPrimaryAsync(string email);
+        Task<CrmContactDto> GetContactAsync(string email);
 
         Task<string> GetAllEmailTeamAsync(string email, string queryEamil);
 

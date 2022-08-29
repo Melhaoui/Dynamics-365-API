@@ -2,7 +2,7 @@
 
 namespace Dynamics365API.Dtos.Crm
 {
-    public class CrmTeamOpportunitiesDataDto<T>
+    public class CrmDataDto<T>
     {
         [Display(Name = "@odata.context")]
         public string OdataContext { get; set; }

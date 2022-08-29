@@ -7,5 +7,6 @@
         public string Lastname { get; set; }
         public string Email { get; set; }
         public bool isPrimary { get; set; }
+        public string? entityimage { get; set; }
     }
 }

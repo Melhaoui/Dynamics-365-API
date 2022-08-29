@@ -61,12 +61,13 @@ namespace Dynamics365API.Controllers
             var result = await _authService.GetCurrentUserAsync(_httpContextAccessor);
             if (result is not null)
             {
-                var isPrimary = await _crmService.GetContactIsPrimaryAsync(result.Email);
+                var contact = await _crmService.GetContactAsync(result.Email);
                 meDto.Id = result.Id;
                 meDto.Firstname = result.FirstName;
                 meDto.Lastname = result.LastName;
                 meDto.Email = result.Email;
-                meDto.isPrimary = isPrimary;
+                meDto.isPrimary = contact.isPrimary;
+                meDto.entityimage = contact.entityimage;
             }
 
             return Ok(meDto);

@@ -10,6 +10,7 @@ using System.Net;
 using System.Web.Http;
 using Dynamics365API.Dtos.Crm;
 using System.Collections.Generic;
+using Dynamics365API.Dtos;
 
 namespace Dynamics365API.Services
 {
@@ -54,6 +55,20 @@ namespace Dynamics365API.Services
             return crmCheckEmail;
         }
 
+        public async Task<string> GetEntityImageAsync(string email)
+        {
+            var httpClient = await _crm.GetD365ClientAsync();
+            string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
+
+            organizationAPIUrl += "contacts" +
+                                  "?$select=entityimage" +
+                                  "&$filter=contains(emailaddress1,'" + email + "')";
+            var contact = await httpClient.GetFromJsonAsync<CrmDataDto<MeDto>>(organizationAPIUrl);
+            var entityImage = contact?.Value?.Select(c => c.entityimage)?.FirstOrDefault()?.ToString();
+
+            return entityImage;
+        }
+
         public async Task<object> GetEntityAsync(string entityQuery)
         {
             var httpClient = await _crm.GetD365ClientAsync();
@@ -64,25 +79,28 @@ namespace Dynamics365API.Services
             return result;
         }
 
-        public async Task<bool> GetContactIsPrimaryAsync(string email)
+        public async Task<CrmContactDto> GetContactAsync(string email)
         {
+            CrmContactDto crmContactDto = new CrmContactDto { };
             var contact = await GetAccountByContactEmailAsync(email);
             var data = JObject.Parse(contact.ToString());
             if (data?.SelectToken("value[0]")?.ToString().Length > 0 )
             {
+                crmContactDto.entityimage = data.SelectToken("value[0].entityimage").ToString();
+
                 string contactId = data.SelectToken("value[0].contactid").ToString();
                 string primaryContactId = data.SelectToken("value[0].parentcustomerid_account._primarycontactid_value").ToString();
                 if (contactId == primaryContactId)
-                    return true;
+                    crmContactDto.isPrimary = true;
             } 
 
-            return false;
+            return crmContactDto;
         }
 
         public async Task<string> GetAllEmailTeamAsync(string email, string queryEamil)
         {
-            string contactId = await GetContactAsync(email);
-            string accountId = await GetAccountAsync(contactId);
+            string contactId = await GetContactIdAsync(email);
+            string accountId = await GetAccountIdAsync(contactId);
 
             var allEmailTeamNotPrimary = await GetAllEmailTeamNotPrimaryAsync(accountId, email, queryEamil);
             var allEmailTeamNotPrimaryFilter = string.Join(" or ", allEmailTeamNotPrimary);
@@ -123,21 +141,22 @@ namespace Dynamics365API.Services
             if (data?.SelectToken("value[0]")?.ToString().Length > 0)
             {
                 string accountId = data.SelectToken("value[0].parentcustomerid_account.accountid").ToString();
-                string query = $"opportunities?$apply=groupby((statuscode),aggregate(opportunityid with countdistinct as count))" +
-                               $"&$filter=_parentaccountid_value eq '{accountId}'";
+                //string query = $"opportunities?$apply=groupby((statuscode),aggregate(opportunityid with countdistinct as count))" +
+                //               $"&$filter=_parentaccountid_value eq '{accountId}'";
+                string query = $"opportunities?$apply=groupby((statuscode),aggregate(opportunityid with countdistinct as count))";
                 result = await GetEntityAsync(query);
             }
             return result;
         }
 
-        private async Task<string> GetContactAsync(string email)
+        private async Task<string> GetContactIdAsync(string email)
         {
             var httpClient = await _crm.GetD365ClientAsync();
             string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
             organizationAPIUrl += $"contacts" +
                                   $"?$select=contactid" +
                                   $"&$filter=contains(emailaddress1, '{email}') ";
-            var contact = await httpClient.GetFromJsonAsync<CrmTeamOpportunitiesDataDto<CrmTeamOpportunitiesValueDto>>(organizationAPIUrl);
+            var contact = await httpClient.GetFromJsonAsync<CrmDataDto<CrmTeamOpportunitiesValueDto>>(organizationAPIUrl);
             if (contact is null || contact?.Value?.Count == 0)
                 throw new HttpResponseException(HttpStatusCode.NotFound);
 
@@ -146,14 +165,14 @@ namespace Dynamics365API.Services
             return contactId;
         }
 
-        private async Task<string> GetAccountAsync(string contactId)
+        private async Task<string> GetAccountIdAsync(string contactId)
         {
             var httpClient = await _crm.GetD365ClientAsync();
             string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
             organizationAPIUrl += $"accounts" +
                                   $"?$select=accountid" +
                                   $"&$filter=primarycontactid/contactid eq {contactId} ";
-            var account = await httpClient.GetFromJsonAsync<CrmTeamOpportunitiesDataDto<CrmTeamOpportunitiesValueDto>>(organizationAPIUrl);
+            var account = await httpClient.GetFromJsonAsync<CrmDataDto<CrmTeamOpportunitiesValueDto>>(organizationAPIUrl);
             if (account is null || account?.Value?.Count == 0)
                 throw new HttpResponseException(HttpStatusCode.NotFound);
 
@@ -167,7 +186,7 @@ namespace Dynamics365API.Services
             var httpClient = await _crm.GetD365ClientAsync();
             string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
             organizationAPIUrl +=$"contacts?$select=emailaddress1&$filter=_parentcustomerid_value eq {accountId} ";
-            var allEmailTeam = await httpClient.GetFromJsonAsync<CrmTeamOpportunitiesDataDto<CrmTeamOpportunitiesAllEmailDto>>(organizationAPIUrl);
+            var allEmailTeam = await httpClient.GetFromJsonAsync<CrmDataDto<CrmTeamOpportunitiesAllEmailDto>>(organizationAPIUrl);
             var allEmailTeamNotPrimary = allEmailTeam.Value
                                         .Select(e => queryEamil+" eq '" + e.Emailaddress1 + "'")
                                         .Where(x => x != queryEamil+" eq '" + email + "'")
@@ -181,7 +200,7 @@ namespace Dynamics365API.Services
 
         private async Task<object> GetAccountByContactEmailAsync(string email)
         {
-            string query = $"contacts?$select=contactid"+
+            string query = $"contacts?$select=contactid, entityimage"+
                            $"&$filter=contains(emailaddress1, '{email}')"+
                            $"&$expand=parentcustomerid_account($select=_primarycontactid_value)";
             var result = await GetEntityAsync(query);
