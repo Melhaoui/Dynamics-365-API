@@ -153,9 +153,11 @@ namespace Dynamics365API.Services
                                       $"&$filter=_parentaccountid_value eq '{accountId}'";
 
                var result = await httpClient.GetFromJsonAsync<CrmDataDto<CrmOpportunitiesRevenue>>(organizationAPIUrl);
-                var query = result.Value.GroupBy(p => p.estimatedclosedate,
+                var query = result.Value.Where(x => x.estimatedclosedate.StartsWith(DateTime.Now.Year.ToString()))
+                                        .GroupBy(p => p.estimatedclosedate,
                                                  p => p.estimatedvalue,
-                                                 (key, g) => new { estimatedclosedate = key, estimatedvalue = g.Sum() });
+                                                 (key, g) => new { estimatedclosedate = key, estimatedvalue = g.Sum() })
+                                        .OrderBy(p=>p.estimatedclosedate);
 
                 return query;
             }
