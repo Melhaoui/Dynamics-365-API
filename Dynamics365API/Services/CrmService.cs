@@ -94,7 +94,7 @@ namespace Dynamics365API.Services
             return allEmailTeamNotPrimaryFilter;
         }
 
-        public async Task<object> CrmCrud(HttpMethod httpMethod, string entityQuery, object body)
+        public async Task<CrmCrudDto> CrmCrud(HttpMethod httpMethod, string entityQuery, object body)
         {
             CrmCrudDto crudCrmDto = new()
             {

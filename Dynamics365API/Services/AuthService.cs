@@ -7,6 +7,9 @@ using Dynamics365API.Helpers;
 using Dynamics365API.Models;
 using Dynamics365API.Dtos;
 using Microsoft.AspNetCore.Identity;
+using System.Web.Http;
+using System.Net;
+
 namespace Dynamics365API.Services
 {
     public class AuthService : IAuthService
@@ -90,6 +93,19 @@ namespace Dynamics365API.Services
             authModel.ExpiresOn = jwtSecurityToken.ValidTo;
 
             return authModel;
+        }
+        public async Task<bool> UpdateUser(string FirstName,string LastName,string Email)
+        {
+            // Get the existing student from the db
+            var user = await GetUserByEmailAsync(Email);
+            if (user is null)
+                throw new HttpResponseException(HttpStatusCode.NotFound);
+
+            user.FirstName = FirstName;
+            user.LastName = LastName;    
+            var result = await _userManager.UpdateAsync(user);
+
+            return (bool)(result.Succeeded);
         }
 
         public async Task<ApplicationUser> GetCurrentUserAsync(IHttpContextAccessor httpContextAccessor)

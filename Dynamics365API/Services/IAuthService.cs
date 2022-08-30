@@ -7,6 +7,7 @@ namespace Dynamics365API.Services
 {
     public interface IAuthService
     {
+        Task<bool> UpdateUser(string FirstName, string LastName, string Email);
         Task<AuthDto> RegisterAsync(RegisterDto model);
 
         Task<AuthDto> GetTokenAsync(TokenRequestDto model);

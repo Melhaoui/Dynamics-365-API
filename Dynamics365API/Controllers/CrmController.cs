@@ -113,6 +113,7 @@ namespace Dynamics365API.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
             var user = await _authService.GetCurrentUserAsync(_httpContextAccessor);
             string Query = $"contacts?$select=contactid&$filter=contains(emailaddress1, '{user.Email}')";
             var contact = await _crmService.GetEntityAsync(Query);
@@ -120,6 +121,9 @@ namespace Dynamics365API.Controllers
             var Contactid = values.SelectToken("value[0].contactid").ToString();
             Contactid = Contactid.Trim(new Char[] { '{', '}' });
             var result = await _crmService.CrmCrud(HttpMethod.Patch, $"contacts({Contactid})", profileDto);
+            
+            if(result.Message == "successfully")
+                await _authService.UpdateUser(profileDto.firstname, profileDto.lastname, user.Email);
 
             return Ok(result);
         }
