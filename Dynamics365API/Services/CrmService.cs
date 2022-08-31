@@ -149,15 +149,18 @@ namespace Dynamics365API.Services
                 string accountId = data.SelectToken("value[0].parentcustomerid_account.accountid").ToString();
                 organizationAPIUrl += $"opportunities" +
                                       $"?$select=estimatedclosedate,estimatedvalue" +
-                                      //$"&$apply=groupby((estimatedclosedate),aggregate(estimatedvalue with sum as total))" +
                                       $"&$filter=_parentaccountid_value eq '{accountId}'";
 
                var result = await httpClient.GetFromJsonAsync<CrmDataDto<CrmOpportunitiesRevenue>>(organizationAPIUrl);
-                var query = result.Value.Where(x => x.estimatedclosedate.StartsWith(DateTime.Now.Year.ToString()))
+                var query= result.Value.Where(e => e.estimatedclosedate.StartsWith(DateTime.Now.Year.ToString()))
                                         .GroupBy(p => p.estimatedclosedate,
                                                  p => p.estimatedvalue,
                                                  (key, g) => new { estimatedclosedate = key, estimatedvalue = g.Sum() })
-                                        .OrderBy(p=>p.estimatedclosedate);
+                                        .OrderBy(p=>p.estimatedclosedate)
+                                        .Select(e => new { x = e.estimatedclosedate, y = e.estimatedvalue, z = e.estimatedvalue })
+                                        .ToList();
+
+
 
                 return query;
             }
@@ -205,7 +208,7 @@ namespace Dynamics365API.Services
             var allEmailTeam = await httpClient.GetFromJsonAsync<CrmDataDto<CrmTeamOpportunitiesAllEmailDto>>(organizationAPIUrl);
             var allEmailTeamNotPrimary = allEmailTeam.Value
                                         .Select(e => queryEamil+" eq '" + e.Emailaddress1 + "'")
-                                        .Where(x => x != queryEamil+" eq '" + email + "'")
+                                        //.Where(x => x != queryEamil+" eq '" + email + "'")
                                         .ToList();
 
             if (allEmailTeamNotPrimary is null || allEmailTeamNotPrimary?.Count == 0)

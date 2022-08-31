@@ -44,8 +44,6 @@ namespace Dynamics365API.Controllers
             var result = await _crmService.GetEntityAsync(Query);
             
             
-            //emailaddress  name    totalamount( Revenu estimé)  actualclosedate    estimatedclosedate   actualvalue(Revenu réel)  closeprobability
-            //classement -interes  -tree inter  -peut intrs
             return Ok(result);
         }
 
@@ -84,7 +82,7 @@ namespace Dynamics365API.Controllers
             string Query = $"contacts" +
                 $"?$select=contactid, firstname,lastname, jobtitle, emailaddress1, telephone1, mobilephone, fax, preferredcontactmethodcode, " +
                 $"address1_line1, address1_line2, address1_line3, address1_city, address1_stateorprovince, address1_postalcode, address1_country," +
-                $" entityimage_url, gendercode, familystatuscode, spousesname, birthdate, anniversary" +
+                $" entityimage, gendercode, familystatuscode, spousesname, birthdate, anniversary" +
                 $"&$expand=parentcustomerid_account($select=name)" +
                 $"&$filter=emailaddress1 eq '{crmContactDetails.Email}'";
             var result = await _crmService.GetEntityAsync(Query);
