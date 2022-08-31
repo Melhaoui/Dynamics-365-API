@@ -88,7 +88,12 @@ namespace Dynamics365API.Services
             string contactId = await GetContactIdAsync(email);
             string accountId = await GetAccountIdAsync(contactId);
 
-            var allEmailTeamNotPrimary = await GetAllEmailTeamNotPrimaryAsync(accountId, email, queryEamil);
+            var allEmailTeamNotPrimary = (dynamic)null;
+            if (queryEamil== "emailaddress")
+              allEmailTeamNotPrimary = await GetAllEmailTeamNotPrimaryAsync(accountId, null, queryEamil);
+            else
+                allEmailTeamNotPrimary = await GetAllEmailTeamNotPrimaryAsync(accountId, email, queryEamil);
+
             var allEmailTeamNotPrimaryFilter = string.Join(" or ", allEmailTeamNotPrimary);
             
             return allEmailTeamNotPrimaryFilter;
@@ -200,16 +205,23 @@ namespace Dynamics365API.Services
             return accountId;
         }
 
-        private async Task<List<string>> GetAllEmailTeamNotPrimaryAsync(string accountId, string email, string queryEamil)
+        private async Task<List<string>> GetAllEmailTeamNotPrimaryAsync(string accountId, string? email, string queryEamil)
         {
             var httpClient = await _crm.GetD365ClientAsync();
             string organizationAPIUrl = _crm.GetOrganizationAPIUrl();
             organizationAPIUrl +=$"contacts?$select=emailaddress1&$filter=_parentcustomerid_value eq {accountId} ";
             var allEmailTeam = await httpClient.GetFromJsonAsync<CrmDataDto<CrmTeamOpportunitiesAllEmailDto>>(organizationAPIUrl);
-            var allEmailTeamNotPrimary = allEmailTeam.Value
-                                        .Select(e => queryEamil+" eq '" + e.Emailaddress1 + "'")
-                                        //.Where(x => x != queryEamil+" eq '" + email + "'")
+            var allEmailTeamNotPrimary = (dynamic)null;
+            if(email==null)
+                allEmailTeamNotPrimary = allEmailTeam.Value
+                                        .Select(e => queryEamil + " eq '" + e.Emailaddress1 + "'")
                                         .ToList();
+            else
+                allEmailTeamNotPrimary = allEmailTeam.Value
+                                        .Select(e => queryEamil + " eq '" + e.Emailaddress1 + "'")
+                                        .Where(x => x != queryEamil+" eq '" + email + "'")
+                                        .ToList();
+            
 
             if (allEmailTeamNotPrimary is null || allEmailTeamNotPrimary?.Count == 0)
                 throw new HttpResponseException(HttpStatusCode.NotFound);
